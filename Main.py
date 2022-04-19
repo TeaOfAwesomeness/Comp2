@@ -2,6 +2,7 @@
 # Imports
 import numpy as np
 import random as rand
+import math
 
 # Input node for the network
 class INode:
@@ -39,3 +40,19 @@ class ONode:
     def set_input(self, input_number, input_value):
         if self.inputs is not None:
             self.inputs[input_number, 0] = input_value # Access the current row, first column and set to new input value
+
+    # Returns a float representing suitability of node as BMU
+    def get_output(self):
+        result = 0
+        for i in range(0, self.inputs.shape[0]):
+            result = result + math.pow((self.inputs[i, 0] - self.inputs[i, 1]), 2) # Summates all squared differences between input value and weight
+        result = math.sqrt(result)
+        return result
+
+    # Train weights according to new BMU
+    def modify_weights(self, radius_current, learning_rate, bmu_dist):
+        dist_effect = math.exp(-(math.pow(bmu_dist, 2)/(2*radius_current)))
+        for i in range(self.inputs.shape[0]):
+            temp_val_desired = self.inputs[i, 0]
+            temp_weight = self.inputs[i, 1]
+            self.inputs[i, 1] = temp_weight + (dist_effect*learning_rate*(temp_val_desired - temp_weight))
