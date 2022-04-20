@@ -17,11 +17,11 @@ class Main:
         print(inode_test1.get_val())
 
         # ONode unit test
-        onode_test1 = ONode(0, 2)
-        onode_test1.init_weights(2) # Initialise weights, also sets up inputs[]
-        onode_test1.set_input(0, 2) # Test input 1
-        onode_test1.set_input(1, 3) # Test input 2
-        print(onode_test1.get_output()) # Return suitability value
+        #onode_test1 = ONode(0, 2)
+        #onode_test1.init_weights(2) # Initialise weights, also sets up inputs[]
+        #onode_test1.set_input(0, 2) # Test input 1
+        #onode_test1.set_input(1, 3) # Test input 2
+        #print(onode_test1.get_output()) # Return suitability value
 
 
 class Network:
@@ -30,6 +30,7 @@ class Network:
     arr_onodes = None
     radius_const = 0
     map_width = 0
+    bmu_list = None
 
     def __init__(self, num_inodes, num_onodes):
         self.map_width = round(math.sqrt(num_onodes))  # Calculate map width
@@ -49,7 +50,6 @@ class Network:
                 else:
                     temp_arr.append(onode)
                 node_num += 1
-
             # Transpose temporary array to make it size: map width by 1, then append to main ONode array
             if i == 0:
                 arr_onodes = np.array(np.transpose(temp_arr))
@@ -61,13 +61,6 @@ class Network:
         for i in range(0, num_inodes):
             inode = INode(i)
             self.inodes.append(inode)
-
-        # Create list of output nodes -----OLD list now an array
-        #self.onodes = list(ONode)
-        #for i in range(0, num_onodes):
-        #    onode = ONode(i)  # New node
-        #    onode.init_weights(num_inodes)  # Randomise weights
-        #    self.onodes.append(onode)  # Add to list
 
     def train(self, inputs, time_const, learn_rate):
         time_current = 0
@@ -81,26 +74,25 @@ class Network:
                 self.inodes(j).set_val(inputs([j], [i]))
             current_best = None
 
-            # Push data through network to all output nodes ----OLD uses list
-            #for j in range(0, len(self.onodes)):
-            #    for x in range(0, len(self.inodes)):
-            #        self.onodes(j).set_input(x, self.inodes(x).get_val())
-            #    output = self.onodes(j).get_output()  # Calculate result of input nodes
-            #    if output << current_best or current_best is None:
-            #        current_best = output  # Update BMU
-
-            # Push data through network to all output nodes
-            for x in range(0, self.map_width):
-                for y in range(0, self.map_width):
-                    for j in range(0, len(self.inodes)):
-                        self.arr_onodes([x], [y]).set_input(j, self.inodes(j).get_val())  # Update input val from INode
-                    output = self.arr_onodes([x], [y]).get_output()  # Calculate result of weighted inputs
-                    if output << current_best or current_best is None:
-                        current_best = output  # Update BMU
+            # Push input data through network
+            bmu = self.push()
+            # Add BMU to list
+            if bmu_list is None:
+                bmu_list = [bmu]
+            else:
+                bmu_list.append(bmu)
 
             # Update training constants
             new_learn_rate = learn_rate * math.exp(-(time_current/time_const))  # Fraction of previous w/ respect to time
             radius_current = self.radius_const * math.exp(-(time_current/time_const))  # Fraction of previous w/ respect to time
+
+            # Update weights
+            for x in range(0, self.map_width):
+                for y in range(0, self.map_width):
+                    bmu_dist = math.sqrt(pow((x - bmu.x_coord), 2) + pow((y - bmu.ycoord), 2))  # Calculate distance to bmu using pythagoras
+                    if bmu_dist <= radius_current:
+                        self.arr_onodes([x], [y]).modify_weights(radius_current, new_learn_rate, bmu_dist)
+        return bmu_list
 
     def push(self):
         # Push data through network to all output nodes
@@ -111,6 +103,7 @@ class Network:
                 output = self.arr_onodes([x], [y]).get_output()  # Calculate result of weighted inputs
                 if output << current_best or current_best is None:
                     current_best = output  # Update BMU
+        return current_best
 
 
 # Input node for the network
