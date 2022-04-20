@@ -3,11 +3,67 @@
 import numpy as np
 import random as rand
 import math
+import tkinter as tk
 
 
 class Main:
+    # Global variables
+    network = None
+
     def __init__(self):
-       self.test()
+        root = tk.Tk()
+        frame = tk.Frame(root, height=700, width=700)
+        frame.pack()
+        self.create_gui(tk, frame)
+        root.mainloop()
+        self.main()
+
+    def create_gui(self, tk, frame):
+        # Command function for btn_gen
+        def generate_network():
+            # Return text values
+            inodes = txt_in.get("1.0", "end-1c")
+            onodes = txt_out.get("1.0", "end-1c")
+            # Send numeric values to network
+            if inodes.isnumeric() and onodes.isnumeric():
+                self.network = Network(int(inodes), int(onodes))
+
+        # Command function of btn_train
+        def train_network():
+            print("train test")
+
+        # Command function of btn_test
+        def test_network():
+            print("test test")
+
+        # All label widgets
+        lbl_in = tk.Label(frame, text="No. Input Nodes").grid(row=0, column=0)
+        lbl_out = tk.Label(frame, text="No. Output Nodes").grid(row=0, column=2)
+        lbl_gen = tk.Label(frame, text="Generate").grid(row=0, column=4)
+        lbl_train = tk.Label(frame, text="Training Data:").grid(row=1, column=0)
+        lbl_lr = tk.Label(frame, text="Learning Rate:").grid(row=1, column=2)
+        lbl_test = tk.Label(frame, text="Test Data:").grid(row=2, column=0)
+        lbl_net = tk.Label(frame, text="Network").grid(row=3, column=1, columnspan=2)
+
+        # All function button widgets
+        btn_gen = tk.Button(frame, command=generate_network, width=2).grid(row=0, column=5)
+        btn_train = tk.Button(frame, command=train_network, width=2).grid(row=1, column=4)
+        btn_test = tk.Button(frame, command=test_network, width=2).grid(row=2, column=2)
+
+        # All text widgets
+        txt_in = tk.Text(frame, width=2, height=1)
+        txt_in.grid(row=0, column=1)
+        txt_out = tk.Text(frame, width=2, height=1)
+        txt_out.grid(row=0, column=3)
+        txt_train = tk.Text(frame, width=20, height=1)
+        txt_train.grid(row=1, column=1)
+        txt_lr = tk.Text(frame, width=2, height=1)
+        txt_lr.grid(row=1, column=3)
+        txt_test = tk.Text(frame, width=20, height=1)
+        txt_test.grid(row=2, column=1)
+
+    def main(self):
+        print("test")
 
     # Function for unit testing
     def test(self):
@@ -24,7 +80,10 @@ class Main:
         #print(onode_test1.get_output()) # Return suitability value
 
 
+# Contains Kohonen map
 class Network:
+    num_inodes = 0
+    num_onodes = 0
     inodes = None
     onodes = None
     arr_onodes = None
@@ -33,6 +92,8 @@ class Network:
     bmu_list = None
 
     def __init__(self, num_inodes, num_onodes):
+        self.num_inodes = num_inodes
+        self.num_onodes = num_onodes
         self.map_width = round(math.sqrt(num_onodes))  # Calculate map width
         map_radius = self.map_width / 2  # Initial learning radius
         node_num = 0  # Setup node id
@@ -41,26 +102,28 @@ class Network:
         for i in range(0, self.map_width):
             # Make a temporary array of ONodes of size 1 by map width
             for j in range(0, self.map_width):
-                onode = ONode(node_num)  # New node
-                onode.x_coord = i
-                onode.y_coord = j
+                onode = ONode(node_num, i, j, num_inodes)  # New node
                 onode.init_weights(num_inodes)  # Randomise weights
                 if j == 0:
                     temp_arr = np.array(onode)
                 else:
-                    temp_arr.append(onode)
+                    np.append(temp_arr, onode)
                 node_num += 1
             # Transpose temporary array to make it size: map width by 1, then append to main ONode array
             if i == 0:
                 arr_onodes = np.array(np.transpose(temp_arr))
             else:
-                arr_onodes.append(np.transpose(temp_arr))
+                np.append(arr_onodes, np.transpose(temp_arr))
 
         # Create list of input nodes
-        self.inodes = list(INode)
         for i in range(0, num_inodes):
             inode = INode(i)
-            self.inodes.append(inode)
+            if i == 0:
+                self.inodes = np.array(inode)
+            else:
+                np.append(self.inodes, inode)
+
+        print("hello world")
 
     def train(self, inputs, time_const, learn_rate):
         time_current = 0
@@ -70,7 +133,7 @@ class Network:
             time_current = time_current + 1  # Learning rate decreases over time
 
             # Load data into input nodes
-            for j in range(0, len(self.inodes)):
+            for j in range(0, self.num_inodes):
                 self.inodes(j).set_val(inputs([j], [i]))
             current_best = None
 
@@ -98,7 +161,7 @@ class Network:
         # Push data through network to all output nodes
         for x in range(0, self.map_width):
             for y in range(0, self.map_width):
-                for j in range(0, len(self.inodes)):
+                for j in range(0, self.num_inodes):
                     self.arr_onodes([x], [y]).set_input(j, self.inodes(j).get_val())  # Update input val from INode
                 output = self.arr_onodes([x], [y]).get_output()  # Calculate result of weighted inputs
                 if output << current_best or current_best is None:
@@ -167,6 +230,11 @@ class ONode:
             temp_val_desired = self.inputs[i, 0]
             temp_weight = self.inputs[i, 1]
             self.inputs[i, 1] = temp_weight + (dist_effect*learning_rate*(temp_val_desired - temp_weight))
+
+
+# Reads input data from file
+class read_data:
+
 
 
 if __name__ == "__main__":
