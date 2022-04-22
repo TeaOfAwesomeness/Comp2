@@ -101,7 +101,7 @@ class Network:
     num_inodes = 0
     num_onodes = 0
     ls_inodes = list((0, 1))
-    onodes = None
+    ls_onodes = None
     arr_onodes = None
     radius_const = 0
     map_width = 0
@@ -120,18 +120,11 @@ class Network:
             for j in range(0, self.map_width):
                 onode = ONode(node_num, i, j, num_inodes)  # New node
                 onode.init_weights(num_inodes)  # Randomise weights
-                if j == 0:
-                    ls_temp = list([copy.deepcopy(onode)])
+                if i == 0 and j == 0:
+                    ls_onodes = list([copy.deepcopy(onode)])
                 else:
-                    ls_temp.append([copy.deepcopy(onode)])
+                    ls_onodes.append([copy.deepcopy(onode)])
                 node_num += 1
-            temp_val_arr = np.array(ls_temp) # Converts list to numpy array
-            # Transpose temporary array to make it size: map width by 1, then append to main ONode array
-            if i == 0:
-                arr_onodes = np.array(np.transpose(copy.deepcopy(temp_val_arr)))
-            else:
-                temp1 = np.transpose(temp_val_arr)
-                np.append(arr_onodes, np.transpose(copy.deepcopy(temp_val_arr)), axis=1)
 
         # Create list of input nodes
         for i in range(0, num_inodes):
@@ -140,7 +133,7 @@ class Network:
                 self.ls_inodes = list([inode])
             else:
                 self.ls_inodes.append([copy.deepcopy(inode)])
-                print("hello world")
+        print("hello world")
 
     # Train network on 'inputs' data
     def train(self, inputs, time_const, learn_rate):
@@ -156,7 +149,7 @@ class Network:
             for j in range(0, self.num_inodes):
                 x=j+1
                 if current_data_list[x].isnumeric:
-                    self.inodes[j].set_val(int(current_data_list[x]))
+                    self.ls_inodes[j].set_val(int(current_data_list[x]))
             current_best = None
 
             # Push input data through network
@@ -185,7 +178,7 @@ class Network:
         for x in range(0, self.map_width):
             for y in range(0, self.map_width):
                 for j in range(0, self.num_inodes):
-                    self.arr_onodes([x], [y]).set_input(j, self.inodes(j).get_val())  # Update input val from INode
+                    self.arr_onodes([x], [y]).set_input(j, self.ls_inodes(j).get_val())  # Update input val from INode
                 output = self.arr_onodes([x], [y]).get_output()  # Calculate result of weighted inputs
                 if output << current_best or current_best is None:
                     current_best = output  # Update BMU
