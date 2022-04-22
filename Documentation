@@ -1,0 +1,114 @@
+#Section 1 - Overview
+This program generates a GUI when run which will initialise a Kohonen Self Organising Map. The number of input and
+output nodes can be specified through the GUI. Training and testing data for the network can be specified as a file
+path to a csv-style text file. Instructions can be found in the readme.
+
+
+#Section 2 - Classes
+
+##2.1 - Main
+Desc:   The main class contains all other class instances.
+###2.1.1 - init
+Desc:   The tkinter root is initialised.
+        Calls functions to initialise GUI and run main code block.
+###2.1.2 - create_gui
+Takes: tk (tkinter reference), frame (root widget)
+Desc:   Contains all tkinter widgets, adding them to root.
+        Contains functions 'generate_network', 'train_network' and 'test_network' as button command functions which call
+        the network generate, train and test functions respectively.
+###2.1.3 - main
+Desc:   Normally used to house any main code blocks, but in this instance just used for testing because button command
+        functions handle most of the work.
+###2.1.4 - read
+Desc:   Reads data from a specified csv file and returns a list of input data.
+###2.1.5 - test
+Desc:   Used for unit testing.
+
+#2.2 - Network
+Takes:  num_inodes (number of input nodes), num_onodes (number of output nodes)
+Desc:   Each instance acts as a Kohonen Map.
+        Contains an array of output nodes and a list of input nodes. These are used in conjunction with each other to
+        perform network actions.
+##2.2.1 - init
+Takes:  num_inodes (number of input nodes), num_onodes (number of output nodes)
+Desc:   Finds the width and initial radius of the map given number of outputs specified.
+        Generates a 2D array of new output nodes and a list of new input nodes based on numbers specified in GUI.
+        Sets the initial weights of all output nodes.
+##2.2.2 - train
+Takes:  inputs (list of lists containing dataset data), time_const (specified time constant), learn_rate(specified learn
+                rate)
+Desc:   Iterates through every dataset (list in inputs) and:
+            Increments time record
+            Sets input values in every input node
+            Pushes data through the network
+            Retrieves BMU
+            Decreases learning rate and current map radius
+            Updates output node weights
+Returns: list of BMUs found for this data.
+##2.2.3 - push
+Takes:  dataset_name (string containing the name of the data being classified)
+Desc:   Loops through all output nodes, setting inputs from the input nodes and getting the fitness of each output node.
+        Calculates the BMU from returned node fitnesses.
+        Adds the dataset name to the BMU, and adds returns the BMU as a node.
+Returns: current_best (BMU)
+
+##2.3 - INode
+Takes:  node_num (id of node)
+Desc:   Acts as a simple representation of an input node.
+###2.3.1 - init
+Takes:  node_num (id of node)
+Desc:   Sets node id.
+###2.3.2 - set_val
+Takes:  in_val (real number as an input to the network)
+Desc:   Sets the input node's current value.
+###2.3.3 - get_val
+Desc:   Just for returning current value.
+Returns: val (current input to this node in the network as a real number)
+
+##2.4 - ONode
+Takes: node_num (id of node), node_x (real integer x coordinate), node_y (real integer y coordinate), num_inputs (real
+       integer number of input nodes)
+Desc:   Acts as a simple representation of an output node.
+        Contains an internal mapping of each input node to an assigned weight.
+        Capable of: randomising weights, getting it's fitness relative to inputs, updating weights for a given BMU and
+        keeping track of related datasets.
+###2.4.1 - init
+Takes:  node_num (id of node), node_x (real integer x coordinate), node_y (real integer y coordinate), num_inputs (real
+        integer number of input nodes)
+Desc:   Sets internal values then immediately calls to randomise weights of input nodes.
+###2.4.2 - init_weights
+Takes:  number_inputs (real integer number of input nodes)
+Desc:   Creates a 2D array containing all input node values and randomised initial weight values between 1 and 100.
+        At the moment it appends to an array that extends in the column direction (axis=1), this is due to my lack of
+        python knowledge at the time of programming and should in future be changed to use axis=0.
+###2.4.3 - set_input
+Takes:  input_number (real integer number, input node id), input_value (real number, current value of the input node)
+Desc:   Sets the input node value to the value specified, for the node specified.
+###2.4.4 - get_output
+Desc:   Summates all squared differences between input value and weight, for all input nodes,
+        then performs square root operation.
+Returns: result (real number, fitness of node for current input set)
+###2.4.5 - modify_weights
+Takes:  radius_current (real number, current network radius), learning_rate (real number, current learning rate),
+        bmu_dist (real number, distance between this node and the bmu)
+Desc:   Calculates the effect of distance dropoff on the learning rate, then sets a new weight for each input node
+        connection.
+        New weight is the current weight summed with a fraction of the difference between the current weight and the
+        current input. This fraction is controlled by using learning rate at this distance as a decimal multiplier.
+###2.4.6 - add_bmu
+Takes:  dataset_name (string, name of the current dataset)
+Desc:   Appends dataset name to list of all datasets this node is a BMU for.
+
+
+#Section 3 - Program Flow
+Main --- Network --- INode
+                 --- ONode
+
+'Main' controls the GUI, which sets all the network variables.
+When a network is generated, 'Main' instantiates a new 'Network'.
+'Network' instances contain a list of 'INode' instances and a 2D array of 'ONode' instances.
+Whenever a command comes in through the GUI, 'Main' calls the appropriate function within the current 'Network'
+instance, which then calls the appropriate functions within 'INode' or 'ONode' instances.
+
+#Section 4 - readme
+The readme with this folder contains user instructions and details on how not to break this incredibly janky program.
