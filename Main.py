@@ -4,6 +4,8 @@ import numpy as np
 import random as rand
 import math
 import tkinter as tk
+import csv
+import copy
 
 
 class Main:
@@ -30,7 +32,12 @@ class Main:
 
         # Command function of btn_train
         def train_network():
-            print("train test")
+            lr = txt_lr.get("1.0", "end-1c")
+            if lr.isnumeric():
+                input_data = self.read(txt_train.get("1.0", "end-1c"))
+                if len(input_data) > 1:
+                    self.network.train(input_data, len(input_data), lr)
+                    print("train test")
 
         # Command function of btn_test
         def test_network():
@@ -65,6 +72,15 @@ class Main:
     def main(self):
         print("test")
 
+    # Read csv file data
+    def read(self, path):
+        file = open(path, newline='')
+        csv_data = csv.reader(file)
+        input_data = list()
+        for row in csv_data:
+            input_data.append(row)
+        return input_data
+
     # Function for unit testing
     def test(self):
         # INode unit test
@@ -84,7 +100,7 @@ class Main:
 class Network:
     num_inodes = 0
     num_onodes = 0
-    inodes = None
+    ls_inodes = list((0, 1))
     onodes = None
     arr_onodes = None
     radius_const = 0
@@ -105,40 +121,46 @@ class Network:
                 onode = ONode(node_num, i, j, num_inodes)  # New node
                 onode.init_weights(num_inodes)  # Randomise weights
                 if j == 0:
-                    temp_arr = np.array(onode)
+                    ls_temp = list([copy.deepcopy(onode)])
                 else:
-                    np.append(temp_arr, onode)
+                    ls_temp.append([copy.deepcopy(onode)])
                 node_num += 1
+            temp_val_arr = np.array(ls_temp) # Converts list to numpy array
             # Transpose temporary array to make it size: map width by 1, then append to main ONode array
             if i == 0:
-                arr_onodes = np.array(np.transpose(temp_arr))
+                arr_onodes = np.array(np.transpose(copy.deepcopy(temp_val_arr)))
             else:
-                np.append(arr_onodes, np.transpose(temp_arr))
+                temp1 = np.transpose(temp_val_arr)
+                np.append(arr_onodes, np.transpose(copy.deepcopy(temp_val_arr)), axis=1)
 
         # Create list of input nodes
         for i in range(0, num_inodes):
             inode = INode(i)
             if i == 0:
-                self.inodes = np.array(inode)
+                self.ls_inodes = list([inode])
             else:
-                np.append(self.inodes, inode)
+                self.ls_inodes.append([copy.deepcopy(inode)])
+                print("hello world")
 
-        print("hello world")
-
+    # Train network on 'inputs' data
     def train(self, inputs, time_const, learn_rate):
         time_current = 0
 
         # Loop through all training data
-        for i in range(0, inputs.shape[0]):
+        for i in range(0, len(inputs)):
             time_current = time_current + 1  # Learning rate decreases over time
 
             # Load data into input nodes
+            current_data_list = inputs[i]
+            dataset_name = current_data_list[0]
             for j in range(0, self.num_inodes):
-                self.inodes(j).set_val(inputs([j], [i]))
+                x=j+1
+                if current_data_list[x].isnumeric:
+                    self.inodes[j].set_val(int(current_data_list[x]))
             current_best = None
 
             # Push input data through network
-            bmu = self.push()
+            bmu = self.push(dataset_name)
             # Add BMU to list
             if bmu_list is None:
                 bmu_list = [bmu]
@@ -157,7 +179,8 @@ class Network:
                         self.arr_onodes([x], [y]).modify_weights(radius_current, new_learn_rate, bmu_dist)
         return bmu_list
 
-    def push(self):
+    # Using one set of inputs, iterate once over the network
+    def push(self, dataset_name):
         # Push data through network to all output nodes
         for x in range(0, self.map_width):
             for y in range(0, self.map_width):
@@ -166,6 +189,7 @@ class Network:
                 output = self.arr_onodes([x], [y]).get_output()  # Calculate result of weighted inputs
                 if output << current_best or current_best is None:
                     current_best = output  # Update BMU
+        self.arr_onodes([current_best.x_coord], [current_best.y_coord]).add_bmu(dataset_name)
         return current_best
 
 
@@ -196,6 +220,7 @@ class ONode:
     # Coordinates in hypothetical matrix
     x_coord = 0
     y_coord = 0
+    list_dataset_names = None
 
     def __init__(self, node_num, node_x, node_y, number_inputs):
         self.id = node_num
@@ -231,10 +256,11 @@ class ONode:
             temp_weight = self.inputs[i, 1]
             self.inputs[i, 1] = temp_weight + (dist_effect*learning_rate*(temp_val_desired - temp_weight))
 
-
-# Reads input data from file
-class read_data:
-
+    def add_bmu(self, dataset_name):
+        if self.list_dataset_names is None:
+            self.list_dataset_names = list(dataset_name)
+        else:
+            self.list_dataset_names.append(dataset_name)
 
 
 if __name__ == "__main__":

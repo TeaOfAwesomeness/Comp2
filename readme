@@ -1,0 +1,46 @@
+#Details
+##Title
+COMP5400 Coursework 2
+##Date
+April 2022
+##Author
+Thomas A.T. Priest
+
+#Description
+This project was created to showcase a Kohonen map.
+There is a GUI to allow for a variable size in number of neurons and specify new training or testing data.
+
+#Dependencies
+There is included a resources file, which contains auto-generated descriptions of required libraries.
+However, just in case it doesn't work all imported libraries are listed below:
+numpy, random, math, tkinter, csv, copy
+
+#Instructions
+First, enter a real integer for the number of input and output nodes, then press the 'generate' button.
+Second, enter the path to your training data.
+    The path should include the file name exactly as it appears.
+    The file should be a text file written in csv format using commas between variables and lines between each set.
+    Each set should have the first variable be the name of the set with no spaces, followed by real numbers for inputs.
+    Note: if the program struggles to accept the file path, use the 'training_data' file with that exact string as input.
+    Press the in line button.
+Third: the network has now been trained. Enter the file path to your test data in the 'test' textbox.
+    The same rules apply as above, but only one line of data should be present.
+    Press the in line button.
+Fourth: The GUI should now show an array of buttons demonstrating output nodes.
+    BMUs will have the name of the dataset/s they match to in their text field.
+To reset, you can re-train with new data for the same size of network or re-generate and re-train for a new size.
+
+#State
+Currently, the map has been written, but the 'network' is buggy with array appending and doesn't work as intended.
+
+#Notes
+The system has some basic validation written in - such as checking a value exists - but WILL break under any amount of
+stress testing.
+I had hoped to get a colour-classification scheme going but being still pretty new to advanced python just debugging the
+arrays took most of my time.
+
+#References
+All the work here is my own. I use equations 1, 2, 4, 5 and 6 described in the following example because they seemed
+sensible and I assume are standard for SOMs:
+http://www.ai-junkie.com/ann/som/som2.html
+Note none of the code is used, just the equations.
