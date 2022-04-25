@@ -18,7 +18,8 @@ However, just in case it doesn't work all imported libraries are listed below:
 numpy, random, math, tkinter, csv, copy
 
 #Instructions
-First, enter a real integer for the number of input and output nodes, then press the 'generate' button.
+First, enter a real integer for the number of input and output nodes, then press the 'generate' button. Note, the number
+    of output nodes should result in an integer number when square rooted (thus an n by n network).
 Second, enter the path to your training data.
     The path should include the file name exactly as it appears.
     The file should be a text file written in csv format using commas between variables and lines between each set.
@@ -31,6 +32,9 @@ Third: the network has now been trained. Enter the file path to your test data i
 Fourth: The GUI should now show an array of buttons demonstrating output nodes.
     BMUs will have the name of the dataset/s they match to in their text field.
 To reset, you can re-train with new data for the same size of network or re-generate and re-train for a new size.
+
+This program was developed and tested in the PyCharm IDE, not tested on linux. It should work, but if not, then it will
+work on PyCharm with all the required dependencies installed.
 
 #State
 The network and GUI work. Future work would be to add a k-means algorithm for colour coding the resulting potential
