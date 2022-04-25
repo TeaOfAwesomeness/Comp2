@@ -3,6 +3,13 @@ This program generates a GUI when run which will initialise a Kohonen Self Organ
 output nodes can be specified through the GUI. Training and testing data for the network can be specified as a file
 path to a csv-style text file. Instructions can be found in the readme.
 
+In development, the network has been trained on the data found in 'training_data' which consists of a series of
+randomly generated numbers between 1 and 100. The network was then tested on the data in 'testing_data' which
+corresponds to the training data, varied by either + or - 10 for each number.
+You can see the test data being classified when the network has been trained. Unfortunately there
+is no way yet to visually prove that the data is being classified sensibly, but you can see some of the test values are
+assigned nodes close to or even on top of their equivalent training data BMUs.
+
 
 #Section 2 - Classes
 

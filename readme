@@ -33,13 +33,16 @@ Fourth: The GUI should now show an array of buttons demonstrating output nodes.
 To reset, you can re-train with new data for the same size of network or re-generate and re-train for a new size.
 
 #State
-Currently, the map has been written, but the 'network' is buggy with array appending and doesn't work as intended.
+The network and GUI work. Future work would be to add a k-means algorithm for colour coding the resulting potential
+field in the network.
 
 #Notes
-The system has some basic validation written in - such as checking a value exists - but WILL break under any amount of
+I tested this system using the data in the associated text files, using an input size of 3, output size of 64 and
+learning rates of both 1 and 0.5.
+The system has some basic validation written in - such as checking a value exists - but will break under any amount of
 stress testing.
 I had hoped to get a colour-classification scheme going but being still pretty new to advanced python just debugging the
-arrays took most of my time.
+arrays (which are now mostly lists) took most of my time.
 
 #References
 All the work here is my own. I use equations 1, 2, 4, 5 and 6 described in the following example because they seemed

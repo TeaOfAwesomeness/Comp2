@@ -19,7 +19,23 @@ class Main:
         frame.pack()
         self.create_gui(tk, frame)
         root.mainloop()
-        self.main()
+
+    # Method for updating buttons with names of their associated datasets
+    def update_btn_array(self):
+        # Blank buttons
+        for i in range(0, len(self.ls_button_matrix)):
+            self.ls_button_matrix[i].config(text="")  # Reset button text for new trained BMUs
+
+        # Update buttons with BMU dataset names
+        bmu_list = self.network.bmu_list
+        for i in range(0, len(bmu_list)):
+            # print("Node: ", bmu_list[i].node_id)
+            self.ls_button_matrix[bmu_list[i].node_id].config(text="")  # Backup blank in case of multiple BMU calls
+            temp_string = "BMU: "  # New string for button text
+            for j in range(0, len(bmu_list[i].ls_dataset_names)):
+                temp_name = str(bmu_list[i].ls_dataset_names[j])  # Get newest dataset name linked to this BMU
+                temp_string = temp_string + temp_name + ", "  # Add new dataset name to the rest
+            self.ls_button_matrix[bmu_list[i].node_id].config(text=copy.deepcopy(temp_string))  # Set new text
 
     def create_gui(self, tk, frame):
         # Command function for btn_gen
@@ -41,31 +57,27 @@ class Main:
                     self.ls_button_matrix[i].grid(row=y_coord, column=x_coord, sticky=tk.EW)
 
         # Command function of btn_train
-        def train_network():
+        def train_network(self):
             # Set variables
             lr = txt_lr.get("1.0", "end-1c")
             input_data = self.read(txt_train.get("1.0", "end-1c"))
 
             # Get BMUs
             if len(input_data) > 1:
-                bmu_list = self.network.train(input_data, len(input_data), float(lr))
+                self.network.train(input_data, len(input_data), float(lr))
+                self.update_btn_array()
                 # print("train test")
 
-                # Blank buttons
-                for i in range(0, len(self.ls_button_matrix)):
-                    self.ls_button_matrix[i].config(text="")  # Reset button text for new trained BMUs
-                # Update buttons with dataset names
-                for i in range(0, len(bmu_list)):
-                    print("Node: ", bmu_list[i].node_id)
-                    temp_string = "BMU: "  # New string for button text
-                    for j in range(0, len(bmu_list[i].ls_dataset_names)):
-                        temp_name = str(bmu_list[i].ls_dataset_names[j])  # Get newest dataset name linked to this BMU
-                        temp_string = temp_string + temp_name + ", "  # Add new dataset name to the rest
-                    self.ls_button_matrix[bmu_list[i].node_id].config(text=copy.deepcopy(temp_string))  # Set new text
-
         # Command function of btn_test
-        def test_network():
-            print("test test")
+        def test_network(self):
+            if self.network.trained_flag is True:
+                input_data = self.read(txt_test.get("1.0", "end-1c"))  # Returns test data from csv file
+
+                # Run test data through network, then update button text
+                if len(input_data) > 0:
+                    self.network.test(input_data)
+                    self.update_btn_array()
+                    # print("test test")
 
         # All label widgets
         lbl_in = tk.Label(frame, text="No. Input Nodes").grid(row=0, column=0)
@@ -78,8 +90,8 @@ class Main:
 
         # All function button widgets
         btn_gen = tk.Button(frame, command=lambda: generate_network(self), width=2).grid(row=0, column=5)
-        btn_train = tk.Button(frame, command=train_network, width=2).grid(row=1, column=4)
-        btn_test = tk.Button(frame, command=test_network, width=2).grid(row=2, column=2)
+        btn_train = tk.Button(frame, command=lambda: train_network(self), width=2).grid(row=1, column=4)
+        btn_test = tk.Button(frame, command=lambda: test_network(self), width=2).grid(row=2, column=2)
 
         # All text widgets
         txt_in = tk.Text(frame, width=2, height=1)
@@ -92,9 +104,6 @@ class Main:
         txt_lr.grid(row=1, column=3)
         txt_test = tk.Text(frame, width=20, height=1)
         txt_test.grid(row=2, column=1)
-
-    def main(self):
-        print("test")
 
     # Read csv file data
     def read(self, path):
@@ -113,11 +122,11 @@ class Main:
         print(inode_test1.get_val())
 
         # ONode unit test
-        #onode_test1 = ONode(0, 2)
-        #onode_test1.init_weights(2) # Initialise weights, also sets up inputs[]
-        #onode_test1.set_input(0, 2) # Test input 1
-        #onode_test1.set_input(1, 3) # Test input 2
-        #print(onode_test1.get_output()) # Return suitability value
+        onode_test1 = ONode(0, 2)
+        onode_test1.init_weights(2)  # Initialise weights, also sets up inputs[]
+        onode_test1.set_input(0, 2)  # Test input 1
+        onode_test1.set_input(1, 3)  # Test input 2
+        print(onode_test1.get_output())  # Return suitability value
 
 
 # Contains Kohonen map
@@ -130,6 +139,7 @@ class Network:
     map_radius = 0
     map_width = 0
     bmu_list = None
+    trained_flag = False
 
     def __init__(self, num_inodes, num_onodes):
         self.num_inodes = num_inodes
@@ -162,7 +172,7 @@ class Network:
     # Train network on 'inputs' data
     def train(self, inputs, time_const, learn_rate):
         time_current = 0
-        bmu_list = None
+        self.bmu_list = None
 
         # Re-set ONodes
         for i in range(0, self.num_onodes):
@@ -173,38 +183,58 @@ class Network:
         for i in range(0, len(inputs)):
             time_current = time_current + 1  # Learning rate decreases over time
 
-            # Load data into input nodes
+            # Prepare input nodes
             current_data_list = inputs[i]
-            dataset_name = str(current_data_list[0])
-            for j in range(0, self.num_inodes):
-                x=j+1
-                if current_data_list[x].isnumeric:
-                    self.ls_inodes[j].set_val(int(current_data_list[x]))
-            current_best = None
+            dataset_name = self.prepare(current_data_list)
 
             # Push input data through network
             bmu = self.push(dataset_name)
+
             # Add BMU to list
-            if bmu_list is None:
-                bmu_list = list([copy.deepcopy(bmu)])
+            if self.bmu_list is None:
+                self.bmu_list = list([copy.deepcopy(bmu)])
             else:
-                bmu_list.extend([copy.deepcopy(bmu)])
+                self.bmu_list.extend([copy.deepcopy(bmu)])
 
             # Update training constants
             new_learn_rate = learn_rate * math.exp(-(time_current/time_const))  # Fraction of previous w/ respect to time
             radius_current = self.map_radius * math.exp(-(time_current/time_const))  # Fraction of previous w/ respect to time
 
             # Update weights
-            for i in range(0, self.num_onodes):
+            for j in range(0, self.num_onodes):
                 # Set x and y coords of current node
-                x = self.ls_onodes[i].get_x_coord()
-                y = self.ls_onodes[i].get_y_coord()
+                x = self.ls_onodes[j].get_x_coord()
+                y = self.ls_onodes[j].get_y_coord()
 
                 # Update weight if node is in range of BMU
                 bmu_dist = math.sqrt(pow((x - bmu.x_coord), 2) + pow((y - bmu.y_coord), 2))  # Calculate distance to bmu using pythagoras
                 if bmu_dist <= radius_current:
-                    self.ls_onodes[i].modify_weights(radius_current, new_learn_rate, bmu_dist)
-        return bmu_list
+                    self.ls_onodes[j].modify_weights(radius_current, new_learn_rate, bmu_dist)
+        self.trained_flag = True
+
+    # Classify test data
+    def test(self, inputs):
+        # Loop through all testing data
+        for i in range(0, len(inputs)):
+            # Prepare input nodes
+            current_data_list = inputs[i]
+            dataset_name = self.prepare(current_data_list)
+
+            # Push input data through network
+            bmu = self.push(dataset_name)
+
+            # Add BMU to list
+            self.bmu_list.extend([copy.deepcopy(bmu)])
+
+    # Prepare input data
+    def prepare(self, current_data_list):
+        # Load data into input nodes
+        dataset_name = str(current_data_list[0])
+        for j in range(0, self.num_inodes):
+            x = j + 1
+            if current_data_list[x].isnumeric:
+                self.ls_inodes[j].set_val(int(current_data_list[x]))
+        return dataset_name
 
     # Using one set of inputs, iterate once over the network
     def push(self, dataset_name):
